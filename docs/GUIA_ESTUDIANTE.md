@@ -18,14 +18,16 @@ Crea una cuenta gratuita en https://github.com (si ya tienes una, úsala). Usa t
 
 1. En tu repositorio pulsa **Code → Codespaces → Create codespace on main**.
 2. Espera 1–2 minutos: se abre VS Code en el navegador con Flex y GCC ya instalados.
-3. Abre una terminal (**Terminal → New Terminal**) y escribe `make test`. Al inicio todos los casos fallan: es lo normal.
+3. Abre una terminal (**Terminal → New Terminal**) y escribe `make test`. Al inicio casi todos los casos fallan: es lo normal, todavía no has escrito nada.
 
 ## 4. Trabajar
 
-- Edita `src/lexer.l` siguiendo los comentarios `TODO`.
-- Escribe tu letra de variante en el archivo `VARIANT`.
-- Corre `make test` cada vez que avances. Para ver un caso solo: `make test-one T=a03`.
-- Para ver los tokens de tu propio archivo: `make run F=mi_prueba.src`.
+- Abre **`docs/GUIA_LAB.md`** y empieza por la **sección 0**. Ahí está todo el laboratorio explicado paso a paso: qué hacer, por qué, cómo y qué deberías ver.
+- Edita `src/lexer.l` cuando la guía te lo indique (busca las marcas `COMPLETAR`).
+- Anota tus predicciones y explicaciones en `NOTAS.md` a medida que avanzas.
+- Escribe tu letra de variante en el archivo `VARIANT` cuando llegues al Paso 10.
+- Para **ver** qué hace tu analizador: `make ver F=ejemplos/ej01_hola.src`.
+- Para **comprobar** tu avance: `make test`. Para un caso solo: `make test-one T=a03`.
 
 ## 5. Guardar y entregar
 
