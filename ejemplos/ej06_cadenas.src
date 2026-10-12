@@ -1,0 +1,4 @@
+msg = "hola \"mundo\"";
+c = 'x';
+t = "esta no cierra
+u = 1;

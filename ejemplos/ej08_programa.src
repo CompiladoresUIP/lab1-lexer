@@ -1,0 +1,14 @@
+int fact(int n) {
+    if (n <= 1) return 1;
+    return n * fact(n - 1);
+}
+
+int main() {
+    int i = 0;
+    float total = 0.5;
+    while (i < 10) {
+        total += i * 2.5;   // acumula
+        i++;
+    }
+    return 0;
+}
