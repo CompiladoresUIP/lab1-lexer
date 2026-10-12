@@ -1,0 +1,4 @@
+a = 1;
+/* este comentario
+   nunca cierra /* ni anidado */
+b = 2;

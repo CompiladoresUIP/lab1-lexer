@@ -1,0 +1,3 @@
+"hola" "con espacios y 123" "" "esc\"aped" "tab\t" 'a' 'Z' '\n' '\''
+printf("x=%d\n", x);
+s = "// no es comentario" + "/* tampoco */";

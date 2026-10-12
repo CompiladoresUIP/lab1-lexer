@@ -1,0 +1,4 @@
+int x; // comentario con if while 123 "texto"
+// solo comentario
+x = 1; //
+y = 2 // fin sin newline

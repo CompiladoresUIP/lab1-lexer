@@ -1,0 +1,7 @@
+int main() {
+    char c = 'x';
+    char *s = "hola;      // falta comilla
+    /* nota /* interna */ aun */
+    x = 3 @ 4;
+    return 0;
+}

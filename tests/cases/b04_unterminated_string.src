@@ -1,0 +1,4 @@
+x = "abierto;
+y = "cerrado";
+z = "otro abierto \" con escape
+w = 1;
