@@ -1,111 +1,122 @@
 # Laboratorio 1 — Analizador léxico de MiniC con Flex
 
 **Compiladores (707-00088) · Universidad Interamericana de Panamá**
-Duración: 2 semanas (semanas 6 y 7) · Equipos de 2 o 3 estudiantes · Peso: ver "Calificación"
+Duración: 2 semanas (semanas 6 y 7) · Equipos de 2 o 3 estudiantes
 
-## 1. Objetivo
+## ¿De qué trata este laboratorio?
 
-Construir, con **Flex**, el analizador léxico de un lenguaje pequeño llamado **MiniC**, aplicando lo visto en el curso: expresiones regulares, coincidencia más larga (*maximal munch*), palabras reservadas frente a identificadores, comentarios anidados con condiciones de inicio y manejo de errores léxicos. Este analizador será la primera pieza del compilador de tu proyecto final.
+Un compilador no lee un programa como lo lees tú. Lo primero que hace es **cortar el texto en piezas con significado** (palabras reservadas, nombres, números, operadores) y descartar lo que no importa (espacios, comentarios). Esa fase se llama **análisis léxico**, y es lo que vas a construir, con una herramienta real: **Flex**.
 
-## 2. Cómo empezar (10 minutos)
-
-Sigue `docs/GUIA_ESTUDIANTE.md`: crear tu repositorio desde esta plantilla, abrir Codespaces, y correr `make test`. No necesitas instalar nada en tu computadora.
-
-## 3. El lenguaje MiniC
-
-Tu programa lee código MiniC por la entrada estándar y escribe **un token por línea**:
+Ejemplo de lo que hará tu programa:
 
 ```
-<línea> <TIPO> <lexema>
+Entrada:                              Salida:
+  int x = 10;   // contador             1 KEYWORD int
+  if (x <= 42) y = x + 1;              1 IDENT x
+                                       1 OP =
+                                       1 INT 10
+                                       1 PUNCT ;
+                                       2 KEYWORD if
+                                       ...
 ```
 
-| Tipo | Qué reconoce | Ejemplos |
-|---|---|---|
-| `KEYWORD` | `if else while for return int float char void break continue` | `while` |
-| `IDENT` | letra o `_`, seguida de letras, dígitos o `_` | `x1`, `_tmp`, `iffy` |
-| `INT` | uno o más dígitos | `42` |
-| `FLOAT` | `dígitos . dígitos [exp]` o `dígitos exp`, con `exp = (e\|E)[+\|-]dígitos+` | `3.14`, `1e5`, `6.02e23` |
-| `STRING` | texto entre comillas dobles, con escapes `\x`; el lexema **incluye** las comillas | `"hola\n"` |
-| `CHAR` | un carácter (o escape) entre comillas simples | `'a'`, `'\n'` |
-| `OP` | `++ -- += -= *= /= == != <= >= && \|\|` y `+ - * / % = < > !` | `<=` |
-| `PUNCT` | `( ) { } [ ] ; , .` | `;` |
+## Este laboratorio es guiado: aprendes viendo
 
-Se descartan: espacios, tabuladores, saltos de línea, comentarios `// ...` hasta fin de línea y comentarios `/* ... */` (que en la Parte B pueden **anidarse**).
+Aquí **no** se trata de adivinar ni de programar a ciegas. Vas a ir paso a paso, y en cada paso:
 
-### Errores léxicos (el analizador nunca se detiene)
+1. **Predices** qué va a pasar.
+2. **Ejecutas** y **observas** qué pasó de verdad.
+3. **Explicas** con tus palabras por qué.
 
-| Situación | Salida |
-|---|---|
-| Carácter que no pertenece al lenguaje | `<línea> ERROR INVALID_CHAR <carácter>` |
-| Cadena que llega a fin de línea sin cerrar | `<línea> ERROR UNTERMINATED_STRING` |
-| Comentario que llega a fin de archivo sin cerrar | `<línea donde empezó> ERROR UNTERMINATED_COMMENT` |
+Todo esto lo tienes explicado en la guía. Lo que aprendes: cómo se escriben y leen las expresiones regulares en un caso real, por qué importa el orden de las reglas, qué es la coincidencia más larga, cómo se manejan los errores sin detener el análisis, y por qué los comentarios anidados necesitan algo más que una expresión regular.
 
-Después de un error, el análisis continúa con lo que sigue.
+## Por dónde empezar
 
-### Reglas que debes respetar
+1. **`docs/GUIA_ESTUDIANTE.md`** — cómo crear tu repositorio, abrir Codespaces y entregar (10 minutos).
+2. **`docs/GUIA_LAB.md`** — la guía del laboratorio, de principio a fin. **Empieza por la sección 0.**
+3. **`NOTAS.md`** — tu cuaderno: ahí anotas predicciones, observaciones y explicaciones.
 
-- **Coincidencia más larga:** `x+++y` se lee como `x`, `++`, `+`, `y`.
-- **Palabras reservadas:** `iffy` es un `IDENT`, `if` es un `KEYWORD`.
-- **Números:** `12abc` son dos tokens (`INT 12` e `IDENT abc`); `7.` son `INT 7` y `PUNCT .`.
-- **Números de línea:** empiezan en 1 y cuentan también las líneas dentro de los comentarios.
+## Archivos del repositorio
 
-## 4. Variantes por equipo
+```
+src/lexer.l          <- aquí trabajas (tiene marcas COMPLETAR que la guía te explica)
+ejemplos/            <- archivos de ejemplo para observar (los usa la guía)
+tests/cases/         <- casos de prueba (.src entrada, .out salida esperada)
+tools/ver.py         <- muestra tu código con los tokens debajo de cada línea
+VARIANT              <- tu letra de variante (A, B, C o D)
+NOTAS.md             <- tu cuaderno de laboratorio
+docs/                <- guías
+Makefile             <- comandos: make ver / make test / make run
+```
 
-Cada equipo recibe una **letra** del instructor. Escríbela en el archivo `VARIANT` (una sola letra). Además de lo anterior, tu analizador debe cumplir:
+## Comandos
 
-| Variante | Requisito adicional |
-|---|---|
-| **A** | Enteros hexadecimales `0x1F` / `0X1f` (al menos un dígito hex) → tipo `HEXINT` |
-| **B** | Comentarios de línea estilo shell: `# ...` hasta fin de línea (se descartan) |
-| **C** | Operadores `**` y `->` (tipo `OP`), respetando la coincidencia más larga |
-| **D** | Enteros binarios `0b101` / `0B11` → tipo `BININT`, y el símbolo `$` permitido en identificadores (también al inicio) |
+```bash
+make ver F=ejemplos/ej01_hola.src   # tu código con los tokens al lado
+make test                            # corre todos los casos de prueba
+make test-one T=a02                  # solo los casos cuyo nombre contiene a02
+make run F=archivo.src               # salida cruda
+```
 
-## 5. Entregas
+## Entregas
 
 | Cuándo | Qué | Qué cubre |
 |---|---|---|
-| **Fin de la semana 6** (checkpoint) | Enlace de tu repositorio en Moodle | Parte A: casos `a01`–`a07` |
-| **Fin de la semana 7** | Enlace del repositorio + `NOTAS.md` completado | Parte B, variante y todo lo anterior |
-| **Semana 7 o 8** | Defensa oral de 5 minutos (por video llamada) | Preguntas sobre tu propio código |
+| **Fin de la semana 6** (checkpoint) | enlace del repositorio en Moodle | Parte A: pasos 1–6 (casos `a01`–`a07`) |
+| **Fin de la semana 7** | enlace del repositorio + `NOTAS.md` completo | Parte B y variante: pasos 7–11 |
+| **Semana 7 u 8** | defensa oral de 5 minutos (video llamada) | explicar tu propio código |
 
-Fechas exactas: las indica el instructor en Moodle.
+Las fechas exactas las indica el instructor en Moodle.
 
-## 6. Cómo probar
-
-```bash
-make test              # compila y corre todos los casos visibles
-make test-one T=a03    # solo los casos cuyo nombre contiene a03
-make run F=prueba.src  # corre tu analizador sobre un archivo tuyo
-```
-
-Al subir tus cambios (`git push`), GitHub corre las mismas pruebas automáticamente: ve a la pestaña **Actions** de tu repositorio. Un ✅ verde significa que pasaron **todos los casos visibles**; la calificación final también usa **casos ocultos**, así que no te limites a hacer pasar los visibles: prueba tus propios archivos con casos raros.
-
-## 7. Calificación (100 puntos)
+## Calificación (100 puntos)
 
 | Componente | Puntos |
 |---|---|
 | Pruebas automáticas — Parte A (15) + Parte B (25) + variante (10) | 50 |
 | Defensa oral individual | 30 |
-| Calidad del código, comentarios en el `.l`, `NOTAS.md` y uso del repositorio (commits de todos los integrantes) | 20 |
+| Cuaderno `NOTAS.md`, calidad del código y uso del repositorio (commits de todos) | 20 |
 
-## 8. Integridad académica
+## El lenguaje MiniC (referencia)
 
-El código debe ser del equipo. En la defensa oral deberás explicar cualquier línea de tu analizador y modificarlo en vivo. Si usas ayudas externas (documentación, foros, asistentes de IA), indícalo en `NOTAS.md` y asegúrate de entender cada línea que entregas.
+Tu programa lee código por la entrada estándar y escribe **un token por línea**: `<línea> <TIPO> <lexema>`.
 
-## 9. Estructura del repositorio
+| Tipo | Qué reconoce | Ejemplos |
+|---|---|---|
+| `KEYWORD` | `if else while for return int float char void break continue` | `while` |
+| `IDENT` | letra o `_`, seguida de letras, dígitos o `_` | `x1`, `_tmp` |
+| `INT` | uno o más dígitos | `42` |
+| `FLOAT` | `dígitos . dígitos [exp]` o `dígitos exp` | `3.14`, `1e5` |
+| `STRING` | texto entre comillas dobles, con escapes; el lexema incluye las comillas | `"hola\n"` |
+| `CHAR` | un carácter (o escape) entre comillas simples | `'a'` |
+| `OP` | `++ -- += -= *= /= == != <= >= && \|\|` y `+ - * / % = < > !` | `<=` |
+| `PUNCT` | `( ) { } [ ] ; , .` | `;` |
 
-```
-src/lexer.l          <- aquí trabajas
-tests/cases/         <- casos visibles (.src entrada, .out salida esperada)
-tests/run_tests.py   <- corredor de pruebas (no lo modifiques)
-VARIANT              <- tu letra
-NOTAS.md             <- preguntas de reflexión y declaración de ayudas
-Makefile
-```
+Se descartan: espacios, saltos de línea, comentarios `// ...` y comentarios `/* ... */` (que en la Parte B pueden anidarse).
 
-## 10. Ayuda
+Errores (el análisis **nunca** se detiene):
+
+| Situación | Salida |
+|---|---|
+| Carácter que no pertenece al lenguaje | `<línea> ERROR INVALID_CHAR <carácter>` |
+| Cadena sin cerrar al llegar a fin de línea | `<línea> ERROR UNTERMINATED_STRING` |
+| Comentario sin cerrar al llegar a fin de archivo | `<línea donde empezó> ERROR UNTERMINATED_COMMENT` |
+
+## Variantes por equipo
+
+| Variante | Requisito adicional |
+|---|---|
+| **A** | enteros hexadecimales `0x1F` → `HEXINT` |
+| **B** | comentarios `# ...` hasta fin de línea |
+| **C** | operadores `**` y `->` |
+| **D** | enteros binarios `0b101` → `BININT`, y `$` permitido en identificadores |
+
+## Integridad académica
+
+El código debe ser del equipo. En la defensa oral deberás explicar cualquier línea de tu analizador y modificarlo en vivo. Si usas ayudas externas (documentación, foros, asistentes de IA), indícalo en `NOTAS.md` y asegúrate de entender cada línea que entregas: el laboratorio está diseñado para que **entiendas**, no solo para que "pase".
+
+## Ayuda
 
 - Manual de Flex: https://westes.github.io/flex/manual/
 - Condiciones de inicio: https://westes.github.io/flex/manual/Start-Conditions.html
-- Probar patrones: https://regex101.com
-- Cápsulas y módulo 6 en Moodle (comentarios anidados, maximal munch, errores léxicos).
+- Probar expresiones regulares: https://regex101.com
+- Cápsulas y Módulo 6 en Moodle.
